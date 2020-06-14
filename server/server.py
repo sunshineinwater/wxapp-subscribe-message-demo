@@ -33,6 +33,7 @@ CODE2SESSION_URL = (
     '&grant_type=authorization_code'
 )
 
+
 async def _get_access_token():
     async with aiohttp.ClientSession() as session:
         async with session.get(ACCESS_TOKEN_URL) as resp:
@@ -43,6 +44,7 @@ async def _get_access_token():
 
     return retdict['access_token']
 
+
 async def _read_access_token():
     if os.path.isfile('token.json'):
         async with aiofiles.open('token.json', 'rb') as fp:
@@ -51,6 +53,7 @@ async def _read_access_token():
         return outdict['access_token']
     else:
         return (await _get_access_token())
+
 
 async def _get_openid(code):
     code2session_url = CODE2SESSION_URL.format(
@@ -67,6 +70,7 @@ async def _get_openid(code):
 
     return retdict['openid']
 
+
 async def _read_openid():
     if os.path.isfile('openid.json'):
         async with aiofiles.open('openid.json', 'rb') as fp:
@@ -74,6 +78,7 @@ async def _read_openid():
         outdict = json.loads(content.decode())
         return outdict['openid']
     return None
+
 
 def make_audit_result_message(openid, data):
     return {
@@ -93,8 +98,9 @@ def make_audit_result_message(openid, data):
             'thing12': {
                 'value': data.get('reason', '')
             }
-      }
+        }
     }
+
 
 def make_patrol_task_message(openid, data):
     return {
@@ -117,8 +123,9 @@ def make_patrol_task_message(openid, data):
             'date4': {
                 'value': data.get('patrol_date', '')
             }
-      }
+        }
     }
+
 
 async def _send_messages(openid):
     access_token = await _read_access_token()
@@ -151,6 +158,7 @@ async def _send_messages(openid):
             retdict = await resp.json()
         print(retdict)
 
+
 async def handle_sync_openid(request):
     code = request.query.get('code', '')
     if not code:
@@ -159,12 +167,14 @@ async def handle_sync_openid(request):
     openid = await _get_openid(code)
     return web.Response(text="done")
 
+
 async def handle_send(request):
     openid = await _read_openid()
     if openid is None:
         raise web.HTTPBadRequest(text='no openid synced yet')
     await _send_messages(openid)
     return web.Response(text="done")
+
 
 app = web.Application()
 app.add_routes([
